@@ -7,6 +7,9 @@ var _ = MINI._,
 
 var drawnThing;
 var formThing;
+var map;
+
+var popupform;
 
 document.addEventListener('DOMContentLoaded', function () {
     // Set up maps
@@ -15,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
         maxZoom: 18
     });
 
-    var map = L.map('map', {
+    map = L.map('map', {
         layers: [layer1],
         center: [55, -3.5],
         zoom: 6
@@ -42,13 +45,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     //Custom functions upon 'edit'
     map.on('draw:created', function (e) {
-        // Can do e.layer._latlngs if e.layerType is "rectangle" or "polygon"
-        // Do if (layer instanceof L.Polyline)
-
-        // Can do e.layer._latlng if e.layerType is "marker"
-        // Do if (layer instanceof L.Marker)
-        var coords = e.layer._latlng;
-        drawnThing = e;
         var tempMarker = featureGroup.addLayer(e.layer);
         var popupContent = '<form id="form">' +
             'Name:<br>' +
@@ -62,6 +58,7 @@ document.addEventListener('DOMContentLoaded', function () {
             '<input id="submit" type="submit" value="Submit">' +
             '</form>';
 
+        popupform = $('#form');
         tempMarker.bindPopup(popupContent, {
             keepInView: true,
             closeButton: false
@@ -77,10 +74,6 @@ document.addEventListener('DOMContentLoaded', function () {
             var email = $$("#email").value;
             var authorUri = $$("#authoruri").value;
             var comment = $$("#comment").value;
-            //            console.log(name);//            console.log(email);
-            //            console.log(authorUri);
-            //            console.log(comment);
-            //            console.log(location);
             var location = getLocationString(e.layer);
             var ttl = getTurtle(name, email, authorUri, datasetUri, datasetVar, location, comment);
 
@@ -90,26 +83,96 @@ document.addEventListener('DOMContentLoaded', function () {
             };
             $.request('post', endpointUrl + 'insert/annotation', ttl, {
                 'headers': headers
-            }).then(function (txt) {
-                console.log(txt);
             }).error(function () {
-                console.log('Failed!');
+                console.log('Problem creating annotation');
             });
-            console.log(ttl);
             featureGroup.removeLayer(e.layer);
         });
 
     });
 });
+var form;
+
+function toggleAnnotations() {
+    console.log("Fetching annotations");
+    var params = {
+        'query': getQuery(map),
+        'format': 'GeoJSON'
+    };
+    var headers = {
+        'Accept': 'application/json'
+    }
+    console.log(getQuery(map));
+    form = generateForm(params);
+    $.request('get', 'http://192.168.56.102:8080/strabonendpoint/Query', params, {
+        'headers': headers
+    }).then(function (resp) {
+        console.log(resp);
+        L.geoJson($.parseJSON(resp), {
+            onEachFeature: function (feature, layer) {
+                if (feature.properties && feature.properties.text) {
+                    layer.bindPopup(feature.properties.text + '\n' + feature.properties.name);
+                }
+            }
+        }).addTo(map);
+    });
+}
+
+function generateForm(path, params) {
+    var form = document.createElement('form');
+    for (var key in params) {
+        if (params.hasOwnProperty(key)) {
+            var hiddenField = document.createElement("input");
+            hiddenField.setAttribute("type", "hidden");
+            hiddenField.setAttribute("name", key);
+            hiddenField.setAttribute("value", params[key]);
+
+            form.appendChild(hiddenField);
+        }
+    }
+
+    document.body.appendChild(form);
+    return form;
+}
+
+function getQuery(mapObj) {
+    var bounds = map.getBounds();
+    var maxx = bounds._northEast['lng'];
+    var maxy = bounds._northEast['lat'];
+    var minx = bounds._southWest['lng'];
+    var miny = bounds._southWest['lat'];
+
+    var query = 'PREFIX charme: <http://purl.org/voc/charme#> ' +
+        'PREFIX oa: <http://www.w3.org/ns/oa#> ' +
+        'PREFIX geo: <http://www.opengis.net/ont/geosparql#> ' +
+        'PREFIX geof: <http://www.opengis.net/def/function/geosparql/> ' +
+        'PREFIX cnt: <http://www.w3.org/2011/content#> ' +
+        'PREFIX foaf: <http://xmlns.com/foaf/0.1/> ' +
+        'SELECT ?text ?name ?wkt ' +
+        'WHERE { ' +
+        '    ?anno oa:hasBody ?body . ' +
+        '    ?anno oa:annotatedBy ?authorUri . ' +
+        '    ?authorUri foaf:name ?name . ' +
+        '    ?body cnt:chars ?text . ' +
+        '    ?anno oa:hasTarget ?target . ' +
+        '    ?target oa:hasSelector ?selector . ' +
+        '    ?selector charme:hasSpatialExtent ?sp . ' +
+        '    ?sp geo:hasGeometry ?geometry . ' +
+        '    ?geometry geo:asWKT ?wkt . ' +
+        '    FILTER(geof:sfIntersects(?wkt, "POLYGON((' +
+        minx + ' ' + miny + ',' +
+        minx + ' ' + maxy + ',' +
+        maxx + ' ' + maxy + ',' +
+        maxx + ' ' + miny + ',' +
+        minx + ' ' + miny +
+        '))"^^geo:wktLiteral)) ' +
+        '} ' +
+        'LIMIT 100';
+    return query;
+}
 
 function getLocationString(layer) {
-    // Can do e.layer._latlngs if e.layerType is "rectangle" or "polygon"
-    // Do if (layer instanceof L.Polyline)
-
-    // Can do e.layer._latlng if e.layerType is "marker"
-    // Do if (layer instanceof L.Marker)
     if (layer instanceof L.Marker) {
-        console.log(layer._latlng);
         return 'POINT (' + layer._latlng['lng'] + ' ' + layer._latlng['lat'] + ')'
     } else if (layer instanceof L.Polyline) {
         // Reverse order of points to ensure they are anti-clockwise
