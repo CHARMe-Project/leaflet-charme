@@ -6,22 +6,22 @@
 
     <meta charset="utf-8">
     <link rel="stylesheet" href="css/charme.css">
-    <link rel="stylesheet" href="css/leaflet.draw.css">
-    <link rel="stylesheet" href="css/leaflet.css">
+    <link rel="stylesheet" href="../css/leaflet.draw.css">
+    <link rel="stylesheet" href="../css/leaflet.css">
 </head>
 
 
 
 
 <body>
-    <script src="js/minified.js"></script>
+    <script src="../js/minified.js"></script>
 
     <!-- leaflet maps related parts -->
-    <script src="js/leaflet.js"></script>
-    <script src="js/leaflet.draw.js"></script>
+    <script src="../js/leaflet.js"></script>
+    <script src="../js/leaflet.draw.js"></script>
 
     <!-- OAuth2 stuff -->
-    <script src="js/jso.js"></script>
+    <script src="../js/jso.js"></script>
 
     <!-- CHARMe annotation plugin -->
     <script src="../charme-leaflet.js"></script>
@@ -30,32 +30,10 @@
     <div id="map"></div>
     <div id="greeting">Please login to add annotations</div>
     <button id="toggleAnnotationsButton">Show annotations</button>
-    <button id="loginButton" onclick="charmeLogin()">Login</button>
-    <button id="logoutButton" onclick="charmeLogout()" disabled=true>Logout</button>
+    <button id="loginButton">Login</button>
+    <button id="logoutButton" disabled=true>Logout</button>
 
-    <script>
-        setLoggedInCallback(function (userdetails) {
-            document.getElementById('greeting').innerHTML = 'Logged in as user ' + userdetails['username'] + '(' + userdetails['first_name'] + ' ' + userdetails['last_name'] + ')';
-
-            document.getElementById('loginButton').disabled = true;
-            document.getElementById('logoutButton').disabled = false;
-        });
-
-        setLoggedOutCallback(function () {
-            document.getElementById('greeting').innerHTML = 'Please login to add annotations';
-            document.getElementById('loginButton').disabled = false;
-            document.getElementById('logoutButton').disabled = true;
-        });
-
-        document.getElementById('toggleAnnotationsButton').addEventListener('click', function () {
-            toggleAnnotations();
-            if (isAnnotationsOn()) {
-                document.getElementById('toggleAnnotationsButton').innerHTML = 'Hide annotations';
-            } else {
-                document.getElementById('toggleAnnotationsButton').innerHTML = 'Show annotations';
-            }
-        });
-    </script>
+    <script src="charme_fgc.js"></script>
 
 </body>
 
