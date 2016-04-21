@@ -97,13 +97,12 @@ CharmeAnnotator.prototype._init = function () {
             'headers': {
                 'Authorization': 'Token ' + this.token,
             }
-        }).then(
-            function (resp) {
-                var userdetails = JSON.parse(resp);
-                if (that.loggedInCallback && that.loggedInCallback instanceof Function) {
-                    that.loggedInCallback(userdetails);
-                }
-            });
+        }).then(function (resp) {
+            var userdetails = JSON.parse(resp);
+            if (that.loggedInCallback && that.loggedInCallback instanceof Function) {
+                that.loggedInCallback(userdetails);
+            }
+        });
 
         /*
          * Add the commenting tools to the map
