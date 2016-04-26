@@ -72,13 +72,6 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('seaIceButton').disabled = false;
         document.getElementById('landCoverButton').disabled = false;
     });
-    document.getElementById('seaIceButton').addEventListener('click', function () {
-        selectDataset(ncwmsServer + '/cci', 'sea_ice_fraction', annotator, map);
-        document.getElementById('sstButton').disabled = false;
-        document.getElementById('sstErrorButton').disabled = false;
-        document.getElementById('seaIceButton').disabled = true;
-        document.getElementById('landCoverButton').disabled = false;
-    });
     document.getElementById('landCoverButton').addEventListener('click', function () {
         selectDataset(ncwmsServer + '/lc', 'land_cover', annotator, map);
         document.getElementById('sstButton').disabled = false;
