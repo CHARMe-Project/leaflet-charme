@@ -302,7 +302,11 @@ CharmeAnnotator.prototype.toggleAnnotations = function () {
                 'Accept': 'application/json'
             }
         }).then(function (resp) {
+            var style = {
+                "fillOpacity": 0.5
+            }
             L.geoJson(JSON.parse(resp), {
+                style: style,
                 onEachFeature: function (feature, layer) {
                     if (feature.properties) {
                         var p = feature.properties;
@@ -366,7 +370,6 @@ CharmeAnnotator.prototype._getQuery = function (datasetUri, datasetVariable) {
         '    ?anno oa:annotatedAt ?time . ' +
         '    ?authorUri foaf:givenName ?firstname . ' +
         '    ?authorUri foaf:familyName ?surname . ' +
-        '    ?authorUri foaf:mbox ?email . ' +
         '    ?authorUri foaf:accountName ?account . ' +
         '    ?body cnt:chars ?text . ' +
         '    ?anno oa:hasTarget ?target . ' +
@@ -377,6 +380,7 @@ CharmeAnnotator.prototype._getQuery = function (datasetUri, datasetVariable) {
         '    ?datasetUri a charme:dataset . ' +
         '    ?selector charme:hasVariable ?variableUri . ' +
         '    ?variableUri charme:hasInternalName ?variableName . ' +
+        '    ?authorUri foaf:mbox ?email . ' +
         'FILTER(?variableName="' + datasetVariable + '") . ' +
         'FILTER(str(?datasetUri)="' + datasetUri + '") . ' + '} ';
     return query;
@@ -406,7 +410,6 @@ CharmeAnnotator.prototype._getLocationString = function (layer) {
  */
 CharmeAnnotator.prototype._getTurtle = function (datasetUri, datasetVar,
     location, comment) {
-    var dateTime = new Date();
     var ttl = '@prefix chnode: <http://localhost/> .' +
         '@prefix charme: <http://purl.org/voc/charme#> .' +
         '@prefix oa: <http://www.w3.org/ns/oa#> .' +
@@ -417,7 +420,6 @@ CharmeAnnotator.prototype._getTurtle = function (datasetUri, datasetVar,
         '@prefix dc: <http://purl.org/dc/elements/1.1/> .' +
         '@prefix dctypes: <http://purl.org/dc/dcmitype/> .' +
         '<chnode:annoID> a oa:Annotation ;' +
-        '    oa:annotatedAt "' + dateTime.toISOString() + '" ;' +
         '    oa:hasTarget <chnode:targetID> ;' +
         '    oa:hasBody <chnode:bodyID> ;' +
         '    oa:motivatedBy oa:linking .' +
