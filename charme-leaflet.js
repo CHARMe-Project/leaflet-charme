@@ -1,3 +1,18 @@
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define(['leaflet', 'JSO'], factory);
+    } else if (typeof module === 'object' && module.exports) {
+        // Node. Does not work with strict CommonJS, but
+        // only CommonJS-like environments that support module.exports,
+        // like Node.
+        module.exports = factory(require('leaflet'), require('jso'), require('leaflet-draw'));
+    } else {
+        // Browser globals (root is window)
+        root.CharmeAnnotator = factory(root.L, root.JSO);
+    }
+}(this, function (L, JSO) {
+
 /**
  * Instantiate a new CharmeAnnotator
  * 
@@ -413,3 +428,6 @@ var _getTurtle = function (datasetUri, datasetVar,
         '    geo:asWKT "' + location + '"^^geo:wktLiteral .';
     return ttl;
 }
+
+return CharmeAnnotator;
+}));
