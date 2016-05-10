@@ -1,10 +1,3 @@
-var MINI = require('minified');
-var _ = MINI._,
-    $ = MINI.$,
-    $$ = MINI.$$,
-    EE = MINI.EE,
-    HTML = MINI.HTML;
-
 /**
  * Instantiate a new CharmeAnnotator
  * 
@@ -93,12 +86,13 @@ CharmeAnnotator.prototype._init = function () {
         /*
          * Get the user details and call the logged-in callback (if present)
          */
-        $.request('get', this.charmeUrl + 'token/userinfo', null, {
+        fetch(this.charmeUrl + 'token/userinfo', {
             'headers': {
                 'Authorization': 'Token ' + this.token,
             }
         }).then(function (resp) {
-            var userdetails = JSON.parse(resp);
+            return resp.json();
+        }).then(function (userdetails) {
             that.fire('login', userdetails);
         });
 
@@ -125,40 +119,42 @@ CharmeAnnotator.prototype._init = function () {
         /*
          * Wire up what happens when we add comments
          */
-        this.map.on('draw:created', function (e) {
+        this.map.on('draw:created', function (drawEvent) {
             /*
              * Create a temporary marker with an open popup
              * containing a form for submitting a comment
              */
-            var tempMarker = featureGroup.addLayer(e.layer);
+            var tempMarker = featureGroup.addLayer(drawEvent.layer);
             var popupContent = '<form id="annoForm">' + 'Comment:<br>' + '<textarea id="annoComment" name="comment" cols="35" rows="5" wrap="soft" form="form"></textarea>' + '<input id="annoSubmit" type="submit" value="Submit">' + '</form>';
 
-            var popupform = $('#annoForm');
+            var popupform = document.getElementById('annoForm');
             var popup = tempMarker.bindPopup(popupContent, {
                 keepInView: true,
                 closeButton: true
             });
 
             popup.openPopup();
-            popup.on('popupclose', function (e) {
+            popup.on('popupclose', function (popupEvent) {
                 /*
                  * Remove the temporary marker if the popup is
                  * closed
                  */
-                featureGroup.removeLayer(e.layer)
+                featureGroup.removeLayer(popupEvent.layer)
             });
 
-            $('#annoSubmit').on('click', function () {
+            document.getElementById('annoSubmit').addEventListener('click', function (event) {
+                L.DomEvent.preventDefault(event);
                 /*
                  * When the submit button is
                  * clicked, get the comment
                  */
-                var comment = $$("#annoComment").value;
+                var comment = document.getElementById("annoComment").value;
+                console.log(comment);
                 /*
                  * Get the location of the
                  * annotation
                  */
-                var location = _getLocationString(e.layer);
+                var location = _getLocationString(drawEvent.layer);
                 /*
                  * Convert to TTL format ready
                  * to post to the CHARMe node
@@ -180,11 +176,13 @@ CharmeAnnotator.prototype._init = function () {
                 /*
                  * Post the TTL to the CHARMe node
                  */
-                $.request('post', that.charmeUrl + 'insert/annotation', ttl, {
-                    'headers': {
+                fetch(that.charmeUrl + 'insert/annotation', {
+                    headers: {
                         'Content-Type': 'text/turtle',
                         'Authorization': 'Token ' + that.token,
-                    }
+                    },
+                    body: ttl,
+                    method: 'post'
                 }).then(function () {
                     if (that.annotationsOn) {
                         /*
@@ -193,10 +191,10 @@ CharmeAnnotator.prototype._init = function () {
                         that.toggleAnnotations();
                         that.toggleAnnotations();
                     }
-                }).error(function () {
-                    console.log('Problem creating annotation');
+                }).catch(function (e) {
+                    console.log('Problem creating annotation', e);
                 });
-                featureGroup.removeLayer(e.layer);
+                featureGroup.removeLayer(drawEvent.layer);
             });
         });
     }
@@ -266,20 +264,18 @@ CharmeAnnotator.prototype.toggleAnnotations = function () {
          * Otherwise, query the CHARMe node and retrieve the results in GeoJSON
          * format
          */
-        var params = {
-            'query': _getQuery(this.datasetUri, this.datasetVar),
-            'format': 'GeoJSON'
-        };
         var that = this;
-        $.request('get', 'http://192.168.56.102:8080/strabonendpoint/Query', params, {
+        fetch('http://192.168.56.102:8080/strabonendpoint/Query?format=GeoJSON&query=' + encodeURIComponent(_getQuery(this.datasetUri, this.datasetVar)), {
             'headers': {
                 'Accept': 'application/json'
             }
         }).then(function (resp) {
+            return resp.json();
+        }).then(function (resp) {
             var style = {
                 "fillOpacity": 0.5
             }
-            L.geoJson(JSON.parse(resp), {
+            L.geoJson(resp, {
                 style: style,
                 onEachFeature: function (feature, layer) {
                     if (feature.properties) {
@@ -330,7 +326,8 @@ CharmeAnnotator.prototype.isAnnotationsOn = function () {
 /**
  * Construct the SPARQL query to get all annotations for the current dataset/variable
  */
-_getQuery = function (datasetUri, datasetVariable) {
+var _getQuery = function (datasetUri, datasetVariable) {
+    console.log(datasetUri, datasetVariable, 'SPARQL');
     var query = 'PREFIX charme: <http://purl.org/voc/charme#> ' +
         'PREFIX oa: <http://www.w3.org/ns/oa#> ' +
         'PREFIX geo: <http://www.opengis.net/ont/geosparql#> ' +
@@ -363,7 +360,7 @@ _getQuery = function (datasetUri, datasetVariable) {
 /**
  * Constructs the WKT location string for a drawn object 
  */
-_getLocationString = function (layer) {
+var _getLocationString = function (layer) {
     if (layer instanceof L.Marker) {
         return 'POINT (' + layer.getLatLng()['lng'] + ' ' + layer.getLatLng()['lat'] + ')'
     } else if (layer instanceof L.Polyline) {
@@ -383,7 +380,7 @@ _getLocationString = function (layer) {
 /**
  * Constructs the turtle needed to insert an annotation.
  */
-_getTurtle = function (datasetUri, datasetVar,
+var _getTurtle = function (datasetUri, datasetVar,
     location, comment) {
     var ttl = '@prefix chnode: <http://localhost/> .' +
         '@prefix charme: <http://purl.org/voc/charme#> .' +
