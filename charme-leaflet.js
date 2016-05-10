@@ -41,11 +41,9 @@ function CharmeAnnotator(charmeUrl, charmeClientId, map) {
     this.annotationsGroup = undefined;
     this.annotationsOn = false;
 
-    this.loggedInCallback = undefined;
     this.datasetUri = undefined;
     this.datasetVar = undefined;
 
-    this.loggedOutCallback = undefined;
     this.formatAnnotation = undefined;
     this.token = undefined;
 
@@ -54,6 +52,8 @@ function CharmeAnnotator(charmeUrl, charmeClientId, map) {
      */
     this._init();
 }
+
+CharmeAnnotator.prototype = Object.create(L.Mixin.Events);
 
 /**
  * Does the initialisation, storing the OAuth token and adding controls to the
@@ -99,9 +99,7 @@ CharmeAnnotator.prototype._init = function () {
             }
         }).then(function (resp) {
             var userdetails = JSON.parse(resp);
-            if (that.loggedInCallback && that.loggedInCallback instanceof Function) {
-                that.loggedInCallback(userdetails);
-            }
+            that.fire('login', userdetails);
         });
 
         /*
@@ -160,12 +158,12 @@ CharmeAnnotator.prototype._init = function () {
                  * Get the location of the
                  * annotation
                  */
-                var location = that._getLocationString(e.layer);
+                var location = _getLocationString(e.layer);
                 /*
                  * Convert to TTL format ready
                  * to post to the CHARMe node
                  */
-                var ttl = that._getTurtle(that.datasetUri, that.datasetVar, location, comment);
+                var ttl = _getTurtle(that.datasetUri, that.datasetVar, location, comment);
 
                 if (!that.token) {
                     /*
@@ -224,7 +222,7 @@ CharmeAnnotator.prototype.charmeLogin = function () {
     this.charmeOAuth.getToken(function (tkn) {
         /*
          * No Need to do anything here - we store the token after the redirect -
-         * same with the loggedInCallback
+         * same as after login
          */
     });
 }
@@ -235,32 +233,8 @@ CharmeAnnotator.prototype.charmeLogin = function () {
 CharmeAnnotator.prototype.charmeLogout = function () {
     this.charmeOAuth.wipeTokens();
     this.token = undefined;
-    if (this.loggedOutCallback && this.loggedOutCallback instanceof Function) {
-        this.loggedOutCallback();
-    }
+    this.fire('logout');
     this.map.removeControl(this.drawControl);
-}
-
-/**
- * Sets the function to be called after login
- * 
- * @param f
- *            A function which takes a single argument, userdetails. This is an
- *            object containing the fields "username", "first_name", and
- *            "last_name"
- */
-CharmeAnnotator.prototype.setLoggedInCallback = function (f) {
-    this.loggedInCallback = f;
-}
-
-/**
- * Sets the function to be called after logout
- * 
- * @param f
- *            A function which takes no arguments
- */
-CharmeAnnotator.prototype.setLoggedOutCallback = function (f) {
-    this.loggedOutCallback = f;
 }
 
 /**
@@ -293,7 +267,7 @@ CharmeAnnotator.prototype.toggleAnnotations = function () {
          * format
          */
         var params = {
-            'query': this._getQuery(this.datasetUri, this.datasetVar),
+            'query': _getQuery(this.datasetUri, this.datasetVar),
             'format': 'GeoJSON'
         };
         var that = this;
@@ -356,7 +330,7 @@ CharmeAnnotator.prototype.isAnnotationsOn = function () {
 /**
  * Construct the SPARQL query to get all annotations for the current dataset/variable
  */
-CharmeAnnotator.prototype._getQuery = function (datasetUri, datasetVariable) {
+_getQuery = function (datasetUri, datasetVariable) {
     var query = 'PREFIX charme: <http://purl.org/voc/charme#> ' +
         'PREFIX oa: <http://www.w3.org/ns/oa#> ' +
         'PREFIX geo: <http://www.opengis.net/ont/geosparql#> ' +
@@ -389,18 +363,19 @@ CharmeAnnotator.prototype._getQuery = function (datasetUri, datasetVariable) {
 /**
  * Constructs the WKT location string for a drawn object 
  */
-CharmeAnnotator.prototype._getLocationString = function (layer) {
+_getLocationString = function (layer) {
     if (layer instanceof L.Marker) {
-        return 'POINT (' + layer._latlng['lng'] + ' ' + layer._latlng['lat'] + ')'
+        return 'POINT (' + layer.getLatLng()['lng'] + ' ' + layer.getLatLng()['lat'] + ')'
     } else if (layer instanceof L.Polyline) {
         // Reverse order of points to ensure they are anti-clockwise
         var poly = 'POLYGON ((';
-        for (var i = layer._latlngs.length - 1; i >= 0; i--) {
+        var latlngs = layer.getLatLngs();
+        for (var i = latlngs.length - 1; i >= 0; i--) {
             // Be careful here - may need to reverse the order for Strabon
-            var latlng = layer._latlngs[i];
+            var latlng = latlngs[i];
             poly = poly + latlng['lng'] + ' ' + latlng['lat'] + ', ';
         }
-        poly = poly + layer._latlngs[layer._latlngs.length - 1]['lng'] + ' ' + layer._latlngs[layer._latlngs.length - 1]['lat'] + '))';
+        poly = poly + latlngs[latlngs.length - 1]['lng'] + ' ' + latlngs[latlngs.length - 1]['lat'] + '))';
         return poly;
     }
 }
@@ -408,7 +383,7 @@ CharmeAnnotator.prototype._getLocationString = function (layer) {
 /**
  * Constructs the turtle needed to insert an annotation.
  */
-CharmeAnnotator.prototype._getTurtle = function (datasetUri, datasetVar,
+_getTurtle = function (datasetUri, datasetVar,
     location, comment) {
     var ttl = '@prefix chnode: <http://localhost/> .' +
         '@prefix charme: <http://purl.org/voc/charme#> .' +

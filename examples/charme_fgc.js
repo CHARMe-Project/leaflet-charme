@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var annotator = new CharmeAnnotator(charmeUrl, charmeClientId, map);
 
     // Set the function to call after a successful login
-    annotator.setLoggedInCallback(function (userdetails) {
+    annotator.on('login', function (userdetails) {
         document.getElementById('greeting').innerHTML = 'Logged in as user ' + userdetails['username'] + '(' + userdetails['first_name'] + ' ' + userdetails['last_name'] + ')';
 
         document.getElementById('loginButton').disabled = true;
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Set the function to call after a logout
-    annotator.setLoggedOutCallback(function () {
+    annotator.on('logout', function () {
         document.getElementById('greeting').innerHTML = 'Please login to add annotations';
         document.getElementById('loginButton').disabled = false;
         document.getElementById('logoutButton').disabled = true;
