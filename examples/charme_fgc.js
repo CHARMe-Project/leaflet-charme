@@ -62,21 +62,18 @@ document.addEventListener('DOMContentLoaded', function () {
         selectDataset(ncwmsServer + '/cci', 'analysed_sst', annotator, map);
         document.getElementById('sstButton').disabled = true;
         document.getElementById('sstErrorButton').disabled = false;
-        document.getElementById('seaIceButton').disabled = false;
         document.getElementById('landCoverButton').disabled = false;
     });
     document.getElementById('sstErrorButton').addEventListener('click', function () {
         selectDataset(ncwmsServer + '/cci', 'analysis_error', annotator, map);
         document.getElementById('sstButton').disabled = false;
         document.getElementById('sstErrorButton').disabled = true;
-        document.getElementById('seaIceButton').disabled = false;
         document.getElementById('landCoverButton').disabled = false;
     });
     document.getElementById('landCoverButton').addEventListener('click', function () {
         selectDataset(ncwmsServer + '/lc', 'land_cover', annotator, map);
         document.getElementById('sstButton').disabled = false;
         document.getElementById('sstErrorButton').disabled = false;
-        document.getElementById('seaIceButton').disabled = false;
         document.getElementById('landCoverButton').disabled = true;
     });
 
@@ -85,10 +82,7 @@ document.addEventListener('DOMContentLoaded', function () {
 function selectDataset(datasetUri, variable, annotator, map) {
     annotator.setDatasetDetails(datasetUri, variable);
 
-    console.log(wmsLayer);
-    console.log(map);
     if (wmsLayer != undefined) {
-        console.log('removing old layer');
         map.removeLayer(wmsLayer);
     }
     wmsLayer = L.tileLayer.wms(datasetUri, {
@@ -106,32 +100,4 @@ function selectDataset(datasetUri, variable, annotator, map) {
         annotator.toggleAnnotations();
         annotator.toggleAnnotations();
     }
-
-    //    var coverageUri = datasetUri + '?REQUEST=GetMap&VERSION=1.1.1&SERVICE=WMS&VERSION=1.1.1&FORMAT=application/prs.coverage+json&STYLES=default-scalar%2Fdefault&REQUEST=GetMap&SRS=EPSG%3A4326&BBOX=-180,-90,-57.12,32.88&WIDTH=256&HEIGHT=256&LAYERS=' + variable;
-    //
-    //    var coverage;
-    //
-    //    CovJSON.read(coverageUri).then(function (data) {
-    //        coverage = data.coverages[0];
-    //        console.log(coverage);
-    //
-    //        var LayerFactory = L.coverage.LayerFactory();
-    //
-    //        dataLayer = LayerFactory(coverage, {
-    //            keys: ['analysed_sst']
-    //        }).on('add', function (e) {
-    //            var covLayer = e.target
-    //
-    //            if (covLayer.palette) {
-    //                new L.coverage.control.Legend(covLayer).addTo(map)
-    //            }
-    //
-    //            if (covLayer.timeSlices) {
-    //                new L.coverage.control.TimeAxis(covLayer).addTo(map)
-    //            }
-    //
-    //            map.fitBounds(covLayer.getBounds())
-    //        }).addTo(map);
-    //        //        dataLayer.addTo(map);
-    //    });
 }

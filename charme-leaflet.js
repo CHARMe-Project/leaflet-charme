@@ -140,7 +140,11 @@ CharmeAnnotator.prototype._init = function () {
              * containing a form for submitting a comment
              */
             var tempMarker = featureGroup.addLayer(drawEvent.layer);
-            var popupContent = '<form id="annoForm">' + 'Comment:<br>' + '<textarea id="annoComment" name="comment" cols="35" rows="5" wrap="soft" form="form"></textarea>' + '<input id="annoSubmit" type="submit" value="Submit">' + '</form>';
+            var popupContent = '<form id="annoForm">' +
+                'Comment:<br>' +
+                '<textarea id="annoComment" name="comment" cols="35" rows="5" wrap="soft" form="form"></textarea>' +
+                '<input id="annoSubmit" type="submit" value="Submit">' +
+                '</form>';
 
             var popupform = document.getElementById('annoForm');
             var popup = tempMarker.bindPopup(popupContent, {
@@ -280,7 +284,7 @@ CharmeAnnotator.prototype.toggleAnnotations = function () {
          * format
          */
         var that = this;
-        fetch('http://192.168.56.102:8080/strabonendpoint/Query?format=GeoJSON&query=' + encodeURIComponent(_getQuery(this.datasetUri, this.datasetVar)), {
+        fetch(this.charmeUrl + 'sparql?format=GeoJSON&query=' + encodeURIComponent(_getQuery(this.datasetUri, this.datasetVar)), {
             'headers': {
                 'Accept': 'application/json'
             }
@@ -342,7 +346,6 @@ CharmeAnnotator.prototype.isAnnotationsOn = function () {
  * Construct the SPARQL query to get all annotations for the current dataset/variable
  */
 var _getQuery = function (datasetUri, datasetVariable) {
-    console.log(datasetUri, datasetVariable, 'SPARQL');
     var query = 'PREFIX charme: <http://purl.org/voc/charme#> ' +
         'PREFIX oa: <http://www.w3.org/ns/oa#> ' +
         'PREFIX geo: <http://www.opengis.net/ont/geosparql#> ' +
