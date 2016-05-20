@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>CHARMe Client</title>
+
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="css/charme.css">
+    <link rel="stylesheet" href="css/leaflet.draw.css">
+    <link rel="stylesheet" href="css/leaflet.css">
+</head>
+
+
+
+
+<body>
+    <!-- leaflet maps related parts -->
+    <script src="js/leaflet.js"></script>
+    <script src="js/leaflet.draw.js"></script>
+
+    <!-- OAuth2 stuff -->
+    <script src="js/jso.js"></script>
+
+    <!-- CHARMe annotation plugin -->
+    <script src="js/charme-leaflet.js"></script>
+
+    <!-- Now we define the maps and the remap button -->
+    <div id="map"></div>
+    <div id="greeting">Please login to add annotations</div>
+    <div id="menu"></div>
+    <button id="toggleAnnotationsButton">Show annotations</button>
+    <button id="loginButton">Login</button>
+    <button id="logoutButton" disabled=true>Logout</button>
+    <br>Datasets:
+    <button id="sstButton">SST</button>
+    <button id="sstErrorButton">SST Error</button>
+    <button id="landCoverButton">Land Cover</button>
+
+    <script src="js/charme_fgc.js"></script>
+
+</body>
+
+</html>
