@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var charmeClientId = '79c4add1c9f283ee130d';
 
     // Create the CHARMe annotator with the given CHARMe node, client ID, and map object
-    var annotator = new CharmeAnnotator(charmeUrl, charmeClientId, map);
+    var annotator = new CharmeAnnotator(charmeUrl, charmeClientId, map, false);
 
     // Set the function to call after a successful login
     annotator.on('login', function (userdetails) {
